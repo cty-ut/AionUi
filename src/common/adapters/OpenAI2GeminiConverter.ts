@@ -28,6 +28,9 @@ export interface OpenAIChatCompletionParams {
     };
   }>;
   tool_choice?: 'auto' | 'none' | { type: 'function'; function: { name: string } };
+
+  // Allow passing arbitrary additional parameters to OpenAI (e.g., temperature, top_p, service_tier)
+  [key: string]: unknown;
 }
 
 export interface OpenAIChatCompletionResponse {

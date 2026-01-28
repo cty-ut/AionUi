@@ -6,8 +6,8 @@
 
 import { ConfigStorage, type IConfigStorageRefer, type IMcpServer } from '@/common/storage';
 import { acpConversation } from '@/common/ipcBridge';
-import { Divider, Form, Switch, Tooltip, Message, Button, Dropdown, Menu, Modal } from '@arco-design/web-react';
-import { Help, Down, Plus } from '@icon-park/react';
+import { Divider, Form, Switch, Tooltip, Message, Button, Dropdown, Menu, Modal, Input, Space, Typography } from '@arco-design/web-react';
+import { Help, Down, Plus, Delete } from '@icon-park/react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import useConfigModelListWithImage from '@/renderer/hooks/useConfigModelListWithImage';
@@ -387,6 +387,97 @@ const ToolsModalContent: React.FC = () => {
                 )}
               </Form.Item>
             </Form>
+
+            {imageGenerationModel?.useModel && (
+              <>
+                <Divider className='my-16px' />
+                <div className='flex items-center justify-between mb-12px'>
+                  <span className='text-14px text-t-primary'>{t('settings.advancedParameters') || 'Advanced Parameters'}</span>
+                </div>
+
+                <div className='bg-3 p-12px rd-8px space-y-16px'>
+                  {/* Common Parameters */}
+                  <Form layout='vertical' className='!gap-0'>
+                    <div className='grid grid-cols-2 gap-12px'>
+                      <Form.Item label='Service Tier' className='mb-0'>
+                        <AionSelect
+                          value={(imageGenerationModel.parameters?.service_tier as string) || 'default'}
+                          onChange={(value) => {
+                            handleImageGenerationModelChange({
+                              parameters: {
+                                ...imageGenerationModel.parameters,
+                                service_tier: value === 'default' ? undefined : value,
+                              },
+                            });
+                          }}
+                        >
+                          <AionSelect.Option value='default'>Default</AionSelect.Option>
+                          <AionSelect.Option value='flex'>Flex (Lower Cost)</AionSelect.Option>
+                        </AionSelect>
+                      </Form.Item>
+                      {/* You can add more common parameters here like Temperature if needed */}
+                    </div>
+                  </Form>
+
+                  <Divider className='my-0 border-border-2 border-dashed' />
+
+                  {/* Custom Parameters */}
+                  <div>
+                    <div className='flex items-center justify-between mb-8px'>
+                      <span className='text-12px text-t-secondary'>{t('settings.customParameters') || 'Custom Parameters (Key-Value)'}</span>
+                    </div>
+
+                    <div className='space-y-8px'>
+                      {(imageGenerationModel.customParameters || []).map((param, index) => (
+                        <div key={index} className='flex items-center gap-8px'>
+                          <Input
+                            placeholder='Key (e.g. quality)'
+                            value={param.key}
+                            onChange={(value) => {
+                              const newParams = [...(imageGenerationModel.customParameters || [])];
+                              newParams[index].key = value;
+                              handleImageGenerationModelChange({ customParameters: newParams });
+                            }}
+                          />
+                          <span className='text-t-secondary'>:</span>
+                          <Input
+                            placeholder='Value (e.g. hd)'
+                            value={param.value}
+                            onChange={(value) => {
+                              const newParams = [...(imageGenerationModel.customParameters || [])];
+                              newParams[index].value = value;
+                              handleImageGenerationModelChange({ customParameters: newParams });
+                            }}
+                          />
+                          <Button
+                            icon={<Delete />}
+                            status='danger'
+                            type='text'
+                            shape='circle'
+                            onClick={() => {
+                              const newParams = (imageGenerationModel.customParameters || []).filter((_, i) => i !== index);
+                              handleImageGenerationModelChange({ customParameters: newParams });
+                            }}
+                          />
+                        </div>
+                      ))}
+
+                      <Button
+                        type='dashed'
+                        long
+                        icon={<Plus />}
+                        onClick={() => {
+                          const newParams = [...(imageGenerationModel.customParameters || []), { key: '', value: '' }];
+                          handleImageGenerationModelChange({ customParameters: newParams });
+                        }}
+                      >
+                        {t('common.add') || 'Add Parameter'}
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Claude Code */}

@@ -463,17 +463,46 @@ class ImageGenerationInvocation extends BaseToolInvocation<ImageGenerationToolPa
 
       updateOutput?.('Sending request to AI service...');
 
+      // Prepare request parameters with support for custom settings
+      // 准备支持自定义设置的请求参数
+      const requestParams: any = {
+        model: this.currentModel,
+        messages: messages as any,
+      };
+
+      // Merge common parameters from config if available
+      // 合并常用参数（如果存在）
+      if (this.imageGenerationModel.parameters) {
+        Object.assign(requestParams, this.imageGenerationModel.parameters);
+      }
+
+      // Merge custom key-value parameters if available
+      // 合并自定义键值对参数（如果存在）
+      if (this.imageGenerationModel.customParameters && Array.isArray(this.imageGenerationModel.customParameters)) {
+        this.imageGenerationModel.customParameters.forEach((param) => {
+          if (param.key && param.key.trim() !== '') {
+            // Attempt to parse value as JSON (for numbers, booleans, objects)
+            // 尝试将值解析为 JSON（用于数字、布尔值、对象）
+            let parsedValue: unknown = param.value;
+            try {
+              // Only parse if it looks like a non-string type or json object
+              if (param.value === 'true' || param.value === 'false' || !isNaN(Number(param.value)) || param.value.startsWith('{') || param.value.startsWith('[')) {
+                parsedValue = JSON.parse(param.value);
+              }
+            } catch {
+              // Keep as string if parsing fails
+              // 解析失败则保留为字符串
+            }
+            requestParams[param.key.trim()] = parsedValue;
+          }
+        });
+      }
+
       const client = await this.ensureClient();
-      const completion: UnifiedChatCompletionResponse = await client.createChatCompletion(
-        {
-          model: this.currentModel,
-          messages: messages as any, // 必要的类型兼容：OpenAI原生格式
-        },
-        {
-          signal,
-          timeout: API_TIMEOUT_MS,
-        }
-      );
+      const completion: UnifiedChatCompletionResponse = await client.createChatCompletion(requestParams, {
+        signal,
+        timeout: API_TIMEOUT_MS,
+      });
 
       const choice = completion.choices[0];
       if (!choice) {

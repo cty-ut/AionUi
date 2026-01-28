@@ -54,6 +54,14 @@ export interface IConfigStorageRefer {
   'gemini.defaultModel': string;
   'tools.imageGenerationModel': TProviderWithModel & {
     switch: boolean;
+    // Common settings for image generation
+    // 图像生成的常用设置
+    parameters?: {
+      [key: string]: unknown;
+    };
+    // Custom key-value parameters for image generation
+    // 图像生成的自定义键值对参数
+    customParameters?: { key: string; value: string }[];
   };
   // 是否在粘贴文件到工作区时询问确认（true = 不再询问）
   'workspace.pasteConfirm'?: boolean;
